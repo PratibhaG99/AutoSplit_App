@@ -4,6 +4,8 @@ import axios from 'axios';
 const EditGroupDialog = ({ group, onClose, onEditGroup }) => {
   const [groupName, setGroupName] = useState('');
   const [members, setMembers] = useState([]);
+  const [groupNameError, setGroupNameError] = useState('');
+  const [memberErrors, setMemberErrors] = useState([]);
   const [checkedMobiles, setCheckedMobiles] = useState([]);
 
   useEffect(() => {
@@ -25,10 +27,13 @@ const EditGroupDialog = ({ group, onClose, onEditGroup }) => {
     );
     setMembers(memlist);
     setCheckedMobiles(memlist.map(() => true)); // Mark all initial members as checked
+    console.log('Checked Mobiles:', memlist.map(() => true));
   };
+  
 
   const checkMemberExists = async (mobile, index) => {
     try {
+      console.log(checkedMobiles.length)
       const response = await axios.get(`http://localhost:5555/user/${mobile}`);
       const newMembers = [...members];
       if (response.data) {
@@ -40,10 +45,7 @@ const EditGroupDialog = ({ group, onClose, onEditGroup }) => {
       } else {
         newMembers[index] = { ...newMembers[index], name: '' };
       }
-      // const newCheckedMobiles = [...checkedMobiles];
-      // newCheckedMobiles[index] = true;
       setMembers(newMembers);
-      // setCheckedMobiles(newCheckedMobiles);
     } catch (error) {
       console.error('Error checking member:', error.message);
     }
@@ -66,17 +68,27 @@ const EditGroupDialog = ({ group, onClose, onEditGroup }) => {
   const addMember = () => {
     setMembers([...members, { name: '', mobile: '' }]);
     setCheckedMobiles([...checkedMobiles, false]);
+    setMemberErrors([...memberErrors, { name: '', mobile: '' }]);
   };
 
   const removeMember = async (index) => {
     try{
       const member_to_remove=members[index].mobile;
+      if(!member_to_remove){
+        const newMembers = members.filter((_, i) => i !== index);
+        setMembers(newMembers);
+        const newCheckedMobiles = checkedMobiles.filter((_, i) => i !== index);
+        setCheckedMobiles(newCheckedMobiles);
+        const newErrors = memberErrors.filter((_, i) => i !== index);
+        setMemberErrors(newErrors);
+        return
+      }
       if(members.length<=1){
         alert("Group should have atleast 1 member.");
         return;
       }
       const indBal=[]
-      const response = await axios.get(`http://localhost:5555/group/${group._id}/${member_to_remove}`);
+      const response = await axios.get(`http://localhost:5555/group/${group._id}/${member_to_remove}/${group.simplified}`);
       if (response.status === 200) {
           indBal[member_to_remove] = Object.keys(response.data)
           .filter(key => (response.data[key] !== 0 && key!='to_give' && key!='to_take'))
@@ -89,6 +101,8 @@ const EditGroupDialog = ({ group, onClose, onEditGroup }) => {
             setMembers(newMembers);
             const newCheckedMobiles = checkedMobiles.filter((_, i) => i !== index);
             setCheckedMobiles(newCheckedMobiles);
+            const newErrors = memberErrors.filter((_, i) => i !== index);
+            setMemberErrors(newErrors);
           }
       }
       else if(response.status === 201){
@@ -96,6 +110,8 @@ const EditGroupDialog = ({ group, onClose, onEditGroup }) => {
         setMembers(newMembers);
         const newCheckedMobiles = checkedMobiles.filter((_, i) => i !== index);
         setCheckedMobiles(newCheckedMobiles);
+        const newErrors = memberErrors.filter((_, i) => i !== index);
+        setMemberErrors(newErrors);
       }
       
     }
@@ -106,6 +122,44 @@ const EditGroupDialog = ({ group, onClose, onEditGroup }) => {
   };
 
   const handleEditGroup = async () => {
+    let valid = true;
+
+    if (groupName.trim() === '') {
+      setGroupNameError('Group name is required.');
+      valid = false;
+    } else {
+      setGroupNameError('');
+    }
+
+
+    const newErrors = members.map(member => {
+      let nameError = '';
+      let mobileError = '';
+      if (member.name.trim() === '') {
+        nameError = 'Member name is required.';
+        valid = false;
+      }
+      if (String(member.mobile).trim() === '') {
+        mobileError = 'Mobile number is required.';
+        valid = false;
+      } else if (String(member.mobile).length !== 10) {
+        mobileError = 'Mobile number must be exactly 10 digits.';
+        valid = false;
+      }
+      else if (!/^\d{10}$/.test(String(member.mobile))) {
+        mobileError = "Mobile number must be exactly 10 digits and contain only numbers";
+        valid = false;
+      }
+      return { name: nameError, mobile: mobileError };
+    });
+    setMemberErrors(newErrors);
+
+
+
+    if(!valid){
+      return;
+    }
+      
     const uniqueMembers = [...new Set(members.map(member => Number(member.mobile)))];
     const updatedGroup = {
       _id: group._id,
@@ -147,28 +201,35 @@ const EditGroupDialog = ({ group, onClose, onEditGroup }) => {
             onChange={(e) => setGroupName(e.target.value)}
             className="w-full px-3 py-2 border rounded"
           />
+          {groupNameError && <p className="text-red-600 text-sm mt-1">{groupNameError}</p>}
         </div>
         <div className="mb-4">
           <label className="block mb-2">Members:</label>
           {members.map((member, index) => (
             <div key={index} className="flex items-center mb-2">
-              <input
-                type="text"
-                name="mobile"
-                value={member.mobile}
-                onChange={(e) => handleMemberChange(index, e)}
-                className="w-full px-3 py-2 border rounded"
-                placeholder="Member Mobile"
-              />
-              <input
-                type="text"
-                name="name"
-                value={member.name}
-                onChange={(e) => handleMemberChange(index, e)}
-                className={`w-full px-3 py-2 border rounded ${member.mobile.length === 10 && checkedMobiles[index] ? 'bg-gray-200' : ''}`}
-                placeholder="Member Name"
-                readOnly={member.mobile.length === 10 && checkedMobiles[index]}
-              />
+              <div className="w-1/2">
+                <input
+                  type="text"
+                  name="mobile"
+                  value={member.mobile}
+                  onChange={(e) => handleMemberChange(index, e)}
+                  className="w-full px-3 py-2 border rounded"
+                  placeholder="Member Mobile"
+                />
+                {memberErrors[index]?.mobile && <p className="text-red-600 text-sm mt-1">{memberErrors[index].mobile}</p>}
+              </div>
+              <div className="w-1/2">
+                <input
+                  type="text"
+                  name="name"
+                  value={member.name}
+                  onChange={(e) => handleMemberChange(index, e)}
+                  className={`w-full px-3 py-2 border rounded ${member.mobile.length === 10 && checkedMobiles[index] ? 'bg-gray-200' : ''}`}
+                  placeholder="Member Name"
+                  readOnly={member.mobile.length === 10 && checkedMobiles[index]}
+                />
+                {memberErrors[index]?.name && <p className="text-red-600 text-sm mt-1">{memberErrors[index].name}</p>}
+              </div>
               <button
                 onClick={() => removeMember(index)}
                 className="ml-2 bg-red-500 text-white px-3 py-1 rounded"

@@ -6,21 +6,30 @@ const EditProfile = ({ user, onClose }) => {
   const [password, setPassword] = useState('');
   const [mobile, setMobile] = useState(user.mobile);
   const [confirmpassword,setConfirmPassword]=useState('');
+  const [errors,setErrors]=useState({});
 
   const handleSave = () => {
     try{
+      let newErrors={}
+      let valid=true
       if (password !== confirmpassword) {
-        alert('Passwords do not match');
-        return;
+        newErrors.confirmpassword=('Password should be same.')
+        valid=false
       }
       if(password.length==0) {
-        alert('Password can not be empty');
-        return;
+        newErrors.password=('Password can not be empty')
+        valid=false
       }
       if(name.length==0) {
-        alert('Name can not be empty');
+        newErrors.name=('Name can not be empty')
+        valid=false
+      }
+      
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
         return;
       }
+
       const response=axios.put(`http://localhost:5555/user/${mobile}`,{name:name,password:password});
       user.name=name;
       user.password=password;
@@ -55,6 +64,7 @@ const EditProfile = ({ user, onClose }) => {
             onChange={(e) => setName(e.target.value)}
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           />
+          {errors.name && (<p className="text-red-500 text-xs mt-1">{errors.name}</p> )}
         </div>
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2">Password</label>
@@ -64,6 +74,7 @@ const EditProfile = ({ user, onClose }) => {
             onChange={(e) => setPassword(e.target.value)}
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           />
+          {errors.password && (<p className="text-red-500 text-xs mt-1">{errors.password}</p> )}
         </div>
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2">Confirm Password</label>
@@ -73,6 +84,7 @@ const EditProfile = ({ user, onClose }) => {
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           />
+          {errors.confirmpassword && (<p className="text-red-500 text-xs mt-1">{errors.confirmpassword}</p> )}
         </div>
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2">Mobile Number</label>

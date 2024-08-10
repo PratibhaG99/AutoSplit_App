@@ -140,21 +140,6 @@ const Group = () => {
     fetchGroupData(mobile);
   };
 
-  // const toggleSmartSpliting=async ()=>{
-  //   setSmartSplitting(!smartSplitting)
-  //   console.log(smartSplitting)
-    
-  //   if(smartSplitting){
-  //     const response = await axios.put(`http://localhost:5555/simplifiedExpense/${gid}`,{'simplified':true});
-  //     const res = await axios.post(`http://localhost:5555/simplifiedExpense/${gid}`,expenses);
-
-  //   }
-  //   else{
-  //     const response = await axios.put(`http://localhost:5555/simplifiedExpense/${gid}`,{'simplified':false});
-  //     const res = await axios.delete(`http://localhost:5555/simplifiedExpense/${gid}`);
-  //   }
-  //   fetchBalance();
-  // }
   const toggleSmartSpliting = async () => {
     setSmartSplitting(prevSmartSplitting => {
       const newSmartSplitting = !prevSmartSplitting;

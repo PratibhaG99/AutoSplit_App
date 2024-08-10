@@ -123,16 +123,17 @@ router.get('/:gId/:phone/:smartSplitting', async (request, response) => {
     try {
         const { gId, phone,smartSplitting } = request.params;
         let expenses=[]
+        console.log("PHONE:",phone)
         if(smartSplitting=="true") {
             expenses = await SimplifiedExpense.find({ groupId: gId });
         }
         else
             expenses = await Expense.find({ groupId: gId });
-
         if (expenses.length > 0) {
             // Calculate balances
+            // console.log("PHONE:",phone)
             const userBalances = calculateUserBalances(expenses, parseInt(phone));
-            console.log(userBalances)
+            // console.log("USERbALANCE:",userBalances)
             response.status(200).json(userBalances);
         } else {
             console.log('No expense found for groupId:', gId);

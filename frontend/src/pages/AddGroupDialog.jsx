@@ -4,6 +4,8 @@ import axios from 'axios';
 const AddGroupDialog = ({ onClose, onCreateGroup }) => {
   const [groupName, setGroupName] = useState('');
   const [members, setMembers] = useState([{ name: '', mobile: '' }]);
+  const [groupNameError, setGroupNameError] = useState('');
+  const [memberErrors, setMemberErrors] = useState([]);
 
   const handleMemberChange = (index, event) => {
     const { name, value } = event.target;
@@ -14,31 +16,73 @@ const AddGroupDialog = ({ onClose, onCreateGroup }) => {
 
   const addMember = () => {
     setMembers([...members, { name: '', mobile: '' }]);
+    setMemberErrors([...memberErrors, { name: '', mobile: '' }]);
   };
 
   const removeMember = (index) => {
     const newMembers = members.filter((_, i) => i !== index);
     setMembers(newMembers);
+    const newErrors = memberErrors.filter((_, i) => i !== index);
+    setMemberErrors(newErrors);
   };
 
   const handleCreateGroup = async () => {
+    let valid = true;
+
+    // Validate group name
+    if (groupName.trim() === '') {
+      setGroupNameError('Group name is required.');
+      valid = false;
+    } else {
+      setGroupNameError('');
+    }
+
+    // Validate members
+    const newErrors = members.map(member => {
+      let nameError = '';
+      let mobileError = '';
+      if (member.name.trim() === '') {
+        nameError = 'Member name is required.';
+        valid = false;
+      }
+      if (member.mobile.trim() === '') {
+        mobileError = 'Mobile number is required.';
+        valid = false;
+      } else if (member.mobile.length !== 10) {
+        mobileError = 'Mobile number must be exactly 10 digits.';
+        valid = false;
+      }
+      else if (!/^\d{10}$/.test(mobile)) {
+        mobileError = "Mobile number must be exactly 10 digits and contain only numbers";
+        valid = false;
+      }
+      return { name: nameError, mobile: mobileError };
+    });
+    setMemberErrors(newErrors);
+
+    if (!valid) {
+      return;
+    }
+
     const loggedInUser = localStorage.getItem('loggedInUser');
     const user = JSON.parse(loggedInUser);
     const mobile = user.mobile;
-    members.forEach(async (member)=>{
+
+    members.forEach(async (member) => {
       const response = await axios.get(`http://localhost:5555/user/${member.mobile}`);
-      if(!response.data) {
-        try{
-          const userr = {'name':member.name, 'mobile':member.mobile, 'password':''}
-          const response = await axios.post('http://localhost:5555/user', userr);
-        }
-        catch {
-          console.error('Error creating group:', error.message);
+      if (!response.data) {
+        try {
+          const userr = { name: member.name, mobile: member.mobile, password: '' };
+          await axios.post('http://localhost:5555/user', userr);
+        } catch (error) {
+          console.error('Error creating user:', error.message);
         }
       }
-    })
+    });
+
     const uniqueMembers = new Set([...members.map(member => member.mobile), String(mobile)]);
     const newGroup = { gname: groupName, gmembers: Array.from(uniqueMembers) };
+
     try {
       const response = await axios.post('http://localhost:5555/group', newGroup);
       if (response.status === 201) {
@@ -62,27 +106,34 @@ const AddGroupDialog = ({ onClose, onCreateGroup }) => {
             onChange={(e) => setGroupName(e.target.value)}
             className="w-full px-3 py-2 border rounded"
           />
+          {groupNameError && <p className="text-red-600 text-sm mt-1">{groupNameError}</p>}
         </div>
         <div className="mb-4">
           <h3 className="text-lg font-semibold mb-2">Members:</h3>
           {members.map((member, index) => (
             <div key={index} className="flex space-x-2 mb-2 items-center">
-              <input
-                type="text"
-                name="name"
-                value={member.name}
-                onChange={(e) => handleMemberChange(index, e)}
-                placeholder="Name"
-                className="w-1/2 px-3 py-2 border rounded"
-              />
-              <input
-                type="text"
-                name="mobile"
-                value={member.mobile}
-                onChange={(e) => handleMemberChange(index, e)}
-                placeholder="Mobile Number"
-                className="w-1/2 px-3 py-2 border rounded"
-              />
+              <div className="w-1/2">
+                <input
+                  type="text"
+                  name="name"
+                  value={member.name}
+                  onChange={(e) => handleMemberChange(index, e)}
+                  placeholder="Name"
+                  className="w-full px-3 py-2 border rounded"
+                />
+                {memberErrors[index]?.name && <p className="text-red-600 text-sm mt-1">{memberErrors[index].name}</p>}
+              </div>
+              <div className="w-1/2">
+                <input
+                  type="text"
+                  name="mobile"
+                  value={member.mobile}
+                  onChange={(e) => handleMemberChange(index, e)}
+                  placeholder="Mobile Number"
+                  className="w-full px-3 py-2 border rounded"
+                />
+                {memberErrors[index]?.mobile && <p className="text-red-600 text-sm mt-1">{memberErrors[index].mobile}</p>}
+              </div>
               {members.length > 1 && (
                 <button
                   onClick={() => removeMember(index)}
