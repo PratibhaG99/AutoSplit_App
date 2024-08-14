@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const SplitType = ({ groupMembers, amount, onConfirm, onClose }) => {
+const SplitType = ({ groupMembers, amount, memberlist, onConfirm, onClose }) => {
   const [selectedPayees, setSelectedPayees] = useState([]);
   const [splitOption, setSplitOption] = useState('equal');
   const [isSplitDialogVisible, setIsSplitDialogVisible] = useState(true);
@@ -60,9 +60,9 @@ const SplitType = ({ groupMembers, amount, onConfirm, onClose }) => {
   };
 
   return isSplitDialogVisible ? (
-    <div onClick={onClose}>
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-800 bg-opacity-75" onClick={onClose}>
       <div
-        className="fixed right-10 top-20 bg-white rounded-lg shadow-lg p-4 border"
+        className="fixed right-10 top-50 bg-white rounded-lg shadow-lg p-4 border"
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -107,7 +107,7 @@ const SplitType = ({ groupMembers, amount, onConfirm, onClose }) => {
         <div className="max-h-48 overflow-y-auto">
           {groupMembers.map((member) => (
             <div key={member} className="flex items-center mb-2">
-              <label className="text-gray-700 w-1/4">{member}</label>
+              <label className="text-gray-700 w-1/4">{memberlist[member]}</label>
               {splitOption === 'equal' ? (
                 <input
                   type="checkbox"

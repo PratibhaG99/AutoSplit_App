@@ -40,11 +40,10 @@ const Group = () => {
     }
   }, [navigate, gid]);
 
-  const fetchBalance=async ()=>{
-    const balanceResponse = await axios.get(`http://localhost:5555/group/${gid}/${mobile}/${!smartSplitting}`);   // to get balance of user
+  const fetchBalance=async (simplified)=>{
+    const balanceResponse = await axios.get(`http://localhost:5555/group/${gid}/${mobile}/${simplified}`);   // to get balance of user
       if (balanceResponse.status === 200)
         setBalance(balanceResponse.data);
-      console.log(balanceResponse.data)
   }
 
 
@@ -69,6 +68,7 @@ const Group = () => {
           userShare[expense._id] = share
         })
         setUserExpenses(userShare);
+        return expensesResponse.data;
       }
     } catch (error) {
       console.error(`Error fetching group data:`, error.message);
@@ -114,8 +114,15 @@ const Group = () => {
     fetchGroupData(mobile);
     setShowBalances(false);
   };
-  const closeAddExpense = () => {
-    fetchGroupData(mobile);
+  const closeAddExpense = async () => {
+    const exp= await fetchGroupData(mobile);
+    if(smartSplitting)
+    {
+      await axios.delete(`http://localhost:5555/simplifiedExpense/${gid}`);
+      console.log(expenses)
+      await axios.post(`http://localhost:5555/simplifiedExpense/${gid}`, exp);
+      await fetchBalance(smartSplitting);
+    }
     setShowModal(false);
   }
 
@@ -136,9 +143,18 @@ const Group = () => {
     setSelectedExpense(null);
   };
 
-  const handleDeleteExpense = (expenseId) => {
-    fetchGroupData(mobile);
+  const handleDeleteExpense = async (expenseId) => {
+    // fetchGroupData(mobile);
+    const exp= await fetchGroupData(mobile);
+    if(smartSplitting)
+    {
+      await axios.delete(`http://localhost:5555/simplifiedExpense/${gid}`);
+      console.log(expenses)
+      await axios.post(`http://localhost:5555/simplifiedExpense/${gid}`, exp);
+      await fetchBalance(smartSplitting);
+    }
   };
+
 
   const toggleSmartSpliting = async () => {
     setSmartSplitting(prevSmartSplitting => {
@@ -149,14 +165,11 @@ const Group = () => {
         if (newSmartSplitting) {
           await axios.put(`http://localhost:5555/simplifiedExpense/${gid}`, { simplified: true });
           await axios.post(`http://localhost:5555/simplifiedExpense/${gid}`, expenses);
-          console.log("1")
         } else {
           await axios.put(`http://localhost:5555/simplifiedExpense/${gid}`, { simplified: false });
           await axios.delete(`http://localhost:5555/simplifiedExpense/${gid}`);
-          console.log("3")
         }
-        console.log("2")
-        fetchBalance();
+        fetchBalance(!smartSplitting);
       })();
       return newSmartSplitting; // Return the new state value
     });
@@ -206,14 +219,20 @@ const Group = () => {
             className="sr-only"
           />
           <label htmlFor="smartSplittingToggle" className="flex items-center cursor-pointer">
-            <div className="block bg-gray-400 w-14 h-8 rounded-full"></div>
+            <div
+              className={`block w-14 h-8 rounded-full transition-colors ${
+                smartSplitting ? 'bg-green-500' : 'bg-gray-400'
+              }`}
+            ></div>
             <div
               className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${
                 smartSplitting ? 'translate-x-full' : ''
               }`}
             ></div>
           </label>
-      </div>
+          <h4>Smart Split</h4>
+        </div>
+
 
 
       </div>
@@ -239,10 +258,10 @@ const Group = () => {
       </div>
 
       {showModal && (
-        <AddExpense gid={gid} onClose={closeAddExpense} />
+        <AddExpense gid={gid} smartSplitting={smartSplitting} onClose={closeAddExpense} />
       )}
       {showExpense && (
-        <ShowExpense gid={gid} expense={selectedExpense} onClose={closeExpenseDialog} onDelete={handleDeleteExpense} />
+        <ShowExpense gid={gid}  expense={selectedExpense}  onClose={closeExpenseDialog} onDelete={handleDeleteExpense} />
       )}
     </div>
     </div>

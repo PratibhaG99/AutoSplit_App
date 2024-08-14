@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import SplitType from './SplitType';
 
-const AddExpenseModal = ({ gid, onClose }) => {
+const AddExpenseModal = ({ gid, smartSplitting , onClose }) => {
   const [newExpense, setNewExpense] = useState({ groupId: gid, expenseName: '', addedBy: '', payer: '', amount: '',initial:[], payees: [], type: 'equal' });
   const [groupMembers, setGroupMembers] = useState([]);
   const [isSplitDialogVisible, setIsSplitDialogVisible] = useState(false);
@@ -11,6 +11,8 @@ const AddExpenseModal = ({ gid, onClose }) => {
   const [splitOption, setSplitOption] = useState('equal');
   const [memberlist,setMemberlist]=useState({});
   const [expenseType, setExpenseType] = useState('travel');
+  const [errors,setErrors]=useState({});
+
   useEffect(() => {
     fetchGroupMembers();
   }, []);
@@ -52,6 +54,33 @@ const AddExpenseModal = ({ gid, onClose }) => {
   };
 
   const handleAddExpense = async () => {
+    let newErrors={}
+    let valid=true
+
+    if(newExpense.expenseName.length==0) {
+      newErrors.expenseName=('Expense Name can not be empty')
+      valid=false
+    }
+
+    if(newExpense.amount.length==0 || newExpense.amount==0) {
+      newErrors.amount=('Amount can not be empty')
+      valid=false
+    }
+
+    if(newExpense.payer.length==0) {
+      newErrors.payer=('Choose payer')
+      valid=false
+    }
+
+    if(newExpense.payees.length==0) {
+      newErrors.payees=('Choose payees')
+      valid=false
+    }
+    
+    setErrors(newErrors)
+    if(!valid) {
+      return
+    }
 
     const tempinitial = [];
     newExpense.payees.forEach(element => {
@@ -109,6 +138,7 @@ const AddExpenseModal = ({ gid, onClose }) => {
                     onChange={handleInputChange}
                     className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {errors.expenseName && (<p className="text-red-500 text-xs mt-1">{errors.expenseName}</p> )}
                   <input
                     type="number"
                     name="amount"
@@ -117,6 +147,7 @@ const AddExpenseModal = ({ gid, onClose }) => {
                     onChange={handleInputChange}
                     className="w-full px-4 py-2 mt-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {errors.amount && (<p className="text-red-500 text-xs mt-1">{errors.amount}</p> )}
                    <label className="block text-gray-700">Expense Type</label>
                     <select
                     name="expenseType"
@@ -144,6 +175,7 @@ const AddExpenseModal = ({ gid, onClose }) => {
                         </option>
                         ))}
                     </select>
+                    {errors.payer && (<p className="text-red-500 text-xs mt-1">{errors.payer}</p> )}
                     </div>
 
                   <div className="mt-4">
@@ -160,6 +192,7 @@ const AddExpenseModal = ({ gid, onClose }) => {
                       >
                         Split Type
                       </button>
+                      {errors.payees && (<p className="text-red-500 text-xs mt-1">{errors.payees}</p> )}
                     </div>
                   </div>
                 </div>
@@ -182,16 +215,17 @@ const AddExpenseModal = ({ gid, onClose }) => {
               Cancel
             </button>
           </div>
-          {isSplitDialogVisible && (
+        </div>
+        {isSplitDialogVisible && (
             // <SplitType groupMembers={groupMembers} amount={newExpense.amount} />
             <SplitType
               groupMembers={groupMembers}
               amount={newExpense.amount}
+              memberlist={memberlist}
               onConfirm={confirmPayees}
               onClose={() => setIsSplitDialogVisible(false)}
             />
           )}
-        </div>
       </div>
     </div>
   );
