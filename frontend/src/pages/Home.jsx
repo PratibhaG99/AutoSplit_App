@@ -19,27 +19,32 @@ const Home = () => {
   const [editGroup, setEditGroup] = useState(null); // State to hold the group being edited
   const navigate = useNavigate();
 
+
   useEffect(() => {
-    const loggedInUser = localStorage.getItem('loggedInUser');
-    const user = JSON.parse(loggedInUser);
-    setMobile(user.mobile);
-    if (!loggedInUser) {
-      navigate('/autosplit/login'); // Navigate to login page if user data is not found
-    } else {
-      const user = JSON.parse(loggedInUser);
-      const mobile = user.mobile;
-      
-      fetchGroups(mobile);
-    }
+    const token = localStorage.getItem('loggedInUser');
+    const accessToken = JSON.parse(token);
+    // setMobile(user.mobile);
+    fetchGroups();
   }, [navigate]);
 
-  const fetchGroups = async (mobile) => {
-    axios.get(`http://localhost:5555/user/allgroups/${mobile}`)
+  const fetchGroups = async () => {
+    const token = localStorage.getItem('loggedInUser');
+    const accessToken = JSON.parse(token);
+    axios.get(`http://localhost:5555/user/allgroups`,{
+      headers: {
+          'Authorization': `Bearer ${accessToken.accessToken}`
+      }
+    })
       .then((response) => {
         setGroups(response.data);
         let to_take=0,to_give=0,taken=0,given=0;
+        if(response.data.length>0)
         response.data.forEach(async (group)=>{
-          const expensesResponse = await axios.get(`http://localhost:5555/group/${group._id}/expenses`);
+          const expensesResponse = await axios.get(`http://localhost:5555/group/${group._id}/expenses`,{
+            headers: {
+                'Authorization': `Bearer ${accessToken.accessToken}`
+            }
+          });
           if(expensesResponse.status===200){expensesResponse.data.forEach((expense)=>{
              if(expense.type==='paid'){
                 if(expense.payer===mobile) {
@@ -113,12 +118,21 @@ const Home = () => {
           Add Group
         </button>
         <Dashboard groups={groups} />
-        <GroupCard 
+        {groups.length > 0 ? (<GroupCard 
           groups={groups} 
           onGroupUpdated={handleEditGroup} 
           onGroupDeleted={handleDeleteGroup} 
           onEditGroup={openEditGroupDialog} // Pass the edit function to GroupCard
-        />
+        />):(
+          <div className="bg-white p-6 rounded-lg shadow-md mt-4">
+            <div className="card">
+              <div className="card-content">
+                <h2>No groups to show</h2>
+                <p>It looks like you're not part of any groups yet. Start by creating a group!</p>
+              </div>
+            </div>
+          </div>
+        )} 
       </div>
       {showAddGroupDialog && (
         <AddGroupDialog 

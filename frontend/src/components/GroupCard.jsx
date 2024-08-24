@@ -13,7 +13,19 @@ const GroupCard = ({ groups, onGroupDeleted, onGroupUpdated, onEditGroup }) => {
       const balancesTemp = {};
       for (const group of groups) {
         try {
-          const response = await axios.get(`http://localhost:5555/group/${group._id}/${mobile}/${group.simplified}`);
+          const token = localStorage.getItem('loggedInUser');
+          const accessToken = JSON.parse(token);
+          const user = await axios.get(`http://localhost:5555/user/getuser`,{
+            headers: {
+                'Authorization': `Bearer ${accessToken.accessToken}`
+            }
+          });
+          setMobile(user.data.mobile);
+          const response = await axios.get(`http://localhost:5555/group/${group._id}/${user.data.mobile}/${group.simplified}`,{
+            headers: {
+                'Authorization': `Bearer ${accessToken.accessToken}`
+            }
+          });
           if (response.status === 201) {
             balancesTemp[group._id] = { to_take: 0, to_give: 0 };
           } else {

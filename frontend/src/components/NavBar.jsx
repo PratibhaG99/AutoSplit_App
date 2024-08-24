@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import EditProfile from '../pages/EditProfile';
 import { Navigate, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const NavBar = () => {
 
@@ -8,9 +9,14 @@ const NavBar = () => {
   const [showEditDialog,setshowEditDialog]=useState(false);
   const navigate=useNavigate();
   useEffect(() => {
-    const loggedInUser = localStorage.getItem('loggedInUser');
-    const userr = JSON.parse(loggedInUser);
-    setUser(userr);
+    const func = async ()=>{const token = localStorage.getItem('loggedInUser');
+      const accessToken = JSON.parse(token);
+      const user = await axios.get(`http://localhost:5555/user/getuser`,{
+        headers: {
+            'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });
+    setUser(user.data);
     const userMenuButton = document.getElementById("user-menu-button");
     const userDropdown = document.getElementById("user-dropdown");
 
@@ -23,7 +29,8 @@ const NavBar = () => {
       userMenuButton.removeEventListener("click", () => {
         userDropdown.classList.toggle("hidden");
       });
-    };
+    };}
+    func();
   }, []);
 
   const EditProfileButton=()=>{

@@ -12,8 +12,14 @@ const ShowExpense = ({ gid, expense, onClose, onDelete }) => {
 
   const fetchGroupMembers = async () => {
     try {
+      const token = localStorage.getItem('loggedInUser');
+      const accessToken = JSON.parse(token);
       const memberslist = {};
-      const response = await axios.get(`http://localhost:5555/group/${gid}`);
+      const response = await axios.get(`http://localhost:5555/group/${gid}`, {
+        headers: {
+            'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });
       const members = response.data.gmembers;
       if (response.status === 200) {
         const memberPromises = members.map(async (member) => {
@@ -31,7 +37,13 @@ const ShowExpense = ({ gid, expense, onClose, onDelete }) => {
 
   const handleDelete = async () => {
     try {
-      const response = await axios.delete(`http://localhost:5555/expense/${_id}`);
+      const token = localStorage.getItem('loggedInUser');
+      const accessToken = JSON.parse(token);
+      const response = await axios.delete(`http://localhost:5555/expense/${_id}`, {
+        headers: {
+            'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });
       if (response.status === 200) {
         onDelete(_id);
         onClose();

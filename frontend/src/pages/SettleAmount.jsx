@@ -5,9 +5,8 @@ const SettleAmount = ({ gid, memberPhone ,memberName, userPhone, userName, balan
     const [amount, setAmount] = useState(Math.abs(balance));
 
     const handleSettle = async () => {
-        const loggedInUser = localStorage.getItem('loggedInUser');
-        const user = JSON.parse(loggedInUser);
-        if (!loggedInUser) {
+        const token = localStorage.getItem('loggedInUser');
+        if (!token) {
             navigate('/autosplit/login');
         } else {
             let newExpense = { groupId: gid, expenseName: 'Paid', addedBy:'', payer: '', amount: amount,initial:[], payees: [], type: 'paid' }
@@ -18,7 +17,13 @@ const SettleAmount = ({ gid, memberPhone ,memberName, userPhone, userName, balan
             newExpense.addedBy = userPhone;
             console.log(newExpense)
             try {
-                const response = await axios.post(`http://localhost:5555/expense/`, newExpense);
+                const accessToken = JSON.parse(token);
+        
+                const response = await axios.post(`http://localhost:5555/expense/`, newExpense, {
+                    headers: {
+                      'Authorization': `Bearer ${accessToken.accessToken}`
+                    }
+                  });
                 if (response.status === 201) {
                   onSettle();
                   onClose(); // Close the modal after successful addition

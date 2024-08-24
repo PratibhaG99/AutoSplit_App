@@ -1,8 +1,24 @@
 import express from "express";
 import { SimplifiedExpense } from "../models/SimplifiedExpensesModel.js";
 import { Group } from "../models/groupModel.js";
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const router=express.Router();
+
+function authenticateToken(req,res,next){
+    const authHeader=req.headers['authorization']
+    const token= authHeader && authHeader.split(" ")[1]
+    console.log("Token=",token)
+    if(token==null) return res.sendStatus(401)
+    
+    jwt.verify(token,process.env.ACCESS_TOKEN_SECRET,(err,user)=>{
+        if(err) return res.sendStatus(403)
+        req.user=user;
+        next();
+    })
+}
 
 
 const smartSplit = (expenses, gId) => {
@@ -52,9 +68,10 @@ const smartSplit = (expenses, gId) => {
 
 
 
-router.post('/:gId', async (req, res) => {
+router.post('/:gId',authenticateToken, async (req, res) => {
     try {
         const expenses  = req.body;
+        // console.log(expenses)
         const {gId}=req.params;
         // console.log(expenses)
         // Call smart_split function to get simplified expenses
@@ -73,7 +90,7 @@ router.post('/:gId', async (req, res) => {
     }
 });
 
-router.put('/:gId',async (request,response)=>{
+router.put('/:gId', authenticateToken, async (request,response)=>{
     try{
         const {gId}=request.params;
         const group = await Group.findOne({ _id: gId });
@@ -92,7 +109,7 @@ router.put('/:gId',async (request,response)=>{
 });
 
 //Route to Delete all expense of gid
-router.delete('/:gId', async (request, response) => {
+router.delete('/:gId', authenticateToken , async (request, response) => {
     try {
         const { gId } = request.params;
         // Assuming you have an Expense model for your expenses collection

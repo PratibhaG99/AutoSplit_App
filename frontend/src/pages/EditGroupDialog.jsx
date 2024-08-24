@@ -88,7 +88,13 @@ const EditGroupDialog = ({ group, onClose, onEditGroup }) => {
         return;
       }
       const indBal=[]
-      const response = await axios.get(`http://localhost:5555/group/${group._id}/${member_to_remove}/${group.simplified}`);
+      const token = localStorage.getItem('loggedInUser');
+      const accessToken = JSON.parse(token);
+      const response = await axios.get(`http://localhost:5555/group/${group._id}/${member_to_remove}/${group.simplified}`,{
+        headers:{
+          'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });
       if (response.status === 200) {
           indBal[member_to_remove] = Object.keys(response.data)
           .filter(key => (response.data[key] !== 0 && key!='to_give' && key!='to_take'))

@@ -38,7 +38,8 @@ const Register = () => {
     try {
       // Check if the mobile number already exists in the database
       const response = await axios.get(`http://localhost:5555/user/${mobile}`);
-      if (response.data) {
+      console.log(response.data)
+      if (response.status===200) {
         if (response.data.password !== "") {
           newErrors.mobile = "Mobile number already exists";
         } else {

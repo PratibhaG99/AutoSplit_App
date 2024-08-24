@@ -2,14 +2,34 @@ import express from "express";
 import { Group } from "../models/groupModel.js";
 import { Expense } from "../models/expenseModel.js";
 import { SimplifiedExpense } from "../models/SimplifiedExpensesModel.js";
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
+
 const router=express.Router();
 
+function authenticateToken(req,res,next){
+    const authHeader=req.headers['authorization']
+    const token= authHeader && authHeader.split(" ")[1]
+    if(token==null) return res.sendStatus(401)
+    
+    jwt.verify(token,process.env.ACCESS_TOKEN_SECRET,(err,user)=>{
+        if(err) return res.sendStatus(403)
+        req.user=user;
+        next();
+    })
+}
+
 //Route to save a group
-router.post('/',async (request,response)=>{
+router.post('/', authenticateToken ,async (request,response)=>{
     try{
         if(!request.body.gname || !request.body.gmembers)
         {    return response.status(400).send({message:'Send all fields'});}
-        
+
+        if (!request.body.gmembers.includes(request.user.mobile)) {
+            request.body.gmembers.push(request.user.mobile);
+        }
+
         const newGroup ={gname:request.body.gname , gmembers:request.body.gmembers};
         const group=await Group.create(newGroup);
         return response.status(201).send(group);
@@ -22,7 +42,7 @@ router.post('/',async (request,response)=>{
 
 
 //Route to get a group
-router.get('/:gId', async (request, response) => {
+router.get('/:gId', authenticateToken ,async (request, response) => {
     try {
         const { gId } = request.params;
         const group = await Group.findById(gId);
@@ -69,7 +89,7 @@ router.put('/:gId', async (request, response) => {
 
 
 // Route to get expense by group id
-router.get('/:gId/expenses', async (request,response)=>{
+router.get('/:gId/expenses', authenticateToken ,async (request,response)=>{
     try{
         const { gId } = request.params;
         const expenses = await Expense.find({ groupId: gId }).sort({ createdAt: -1 });;
@@ -119,11 +139,10 @@ const calculateUserBalances = (expenses, phone) => {
 
 
 // Route to get all left transactions of user with each other member of the group
-router.get('/:gId/:phone/:smartSplitting', async (request, response) => {
+router.get('/:gId/:phone/:smartSplitting', authenticateToken ,async (request, response) => {
     try {
         const { gId, phone,smartSplitting } = request.params;
         let expenses=[]
-        console.log("PHONE:",phone)
         if(smartSplitting=="true") {
             expenses = await SimplifiedExpense.find({ groupId: gId });
         }

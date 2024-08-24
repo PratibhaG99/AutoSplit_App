@@ -12,12 +12,13 @@ const Spendings = ({ gid, onClose, expenses, user }) => {
 
   const fetchTotalSpendings = async () => {
     let total = 0, yourspend=0, yoursh=0;
+    console.log(expenses)
     expenses.forEach(element => {
-      if(element.type!=="paid") {
+      if(element.type!="paid") {
           total = total + element.amount;
-          if(element.payer===user) yourspend += element.amount;
+          if(element.payer==user) yourspend += element.amount;
           element.initial.forEach(item => {
-            if(item.phone===user) yoursh += item.amount;
+            if(item.phone==user) yoursh += item.amount;
           });
         }
     });

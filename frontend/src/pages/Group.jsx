@@ -28,20 +28,47 @@ const Group = () => {
 
 
   useEffect(() => {
-    const loggedInUser = localStorage.getItem('loggedInUser');
-
-    if (loggedInUser) {
-      const user = JSON.parse(loggedInUser);
-      setMobile(user.mobile);
-      fetchGroupData(user.mobile);
-      fetchGroupMembers();
-    } else {
-      navigate('/autosplit/login'); // Navigate to login page if user data is not found
-    }
+    const fetchData = async () => {
+      const token = localStorage.getItem('loggedInUser');
+      const accessToken = JSON.parse(token);
+  
+      if (accessToken) {
+        try {
+          const user = await axios.get(`http://localhost:5555/user/getuser`, {
+            headers: {
+              'Authorization': `Bearer ${accessToken.accessToken}`
+            }
+          });
+  
+          setMobile(user.data.mobile);
+          fetchGroupData(user.data.mobile);
+          fetchGroupMembers();
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      } else {
+        navigate('/autosplit/login'); // Navigate to login page if user data is not found
+      }
+    };
+  
+    fetchData();
   }, [navigate, gid]);
+  
 
   const fetchBalance=async (simplified)=>{
-    const balanceResponse = await axios.get(`http://localhost:5555/group/${gid}/${mobile}/${simplified}`);   // to get balance of user
+      const token = localStorage.getItem('loggedInUser');
+      const accessToken = JSON.parse(token);
+      const user = await axios.get(`http://localhost:5555/user/getuser`,{
+        headers: {
+            'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });
+      // setMobile(user.data.mobile);
+    const balanceResponse = await axios.get(`http://localhost:5555/group/${gid}/${mobile}/${simplified}`,{
+      headers: {
+          'Authorization': `Bearer ${accessToken.accessToken}`
+      }
+    });   // to get balance of user
       if (balanceResponse.status === 200)
         setBalance(balanceResponse.data);
   }
@@ -49,21 +76,37 @@ const Group = () => {
 
   const fetchGroupData = async (mobile) => {
     try {
+      const token = localStorage.getItem('loggedInUser');
+      const accessToken = JSON.parse(token);
       const userShare = {}
-      const groupResponse = await axios.get(`http://localhost:5555/group/${gid}`);    //to get group info
+      const groupResponse = await axios.get(`http://localhost:5555/group/${gid}`,{
+        headers: {
+            'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });    //to get group info
       setGroupName(groupResponse.data.gname);
       setSmartSplitting(groupResponse.data.simplified)
-      const balanceResponse = await axios.get(`http://localhost:5555/group/${gid}/${mobile}/${groupResponse.data.simplified}`);   // to get balance of user
+      const balanceResponse = await axios.get(`http://localhost:5555/group/${gid}/${mobile}/${groupResponse.data.simplified}`,{
+        headers: {
+            'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });   // to get balance of user
       if (balanceResponse.status === 200)
         setBalance(balanceResponse.data);
 
-      const expensesResponse = await axios.get(`http://localhost:5555/group/${gid}/expenses`);
+      const expensesResponse = await axios.get(`http://localhost:5555/group/${gid}/expenses`,{
+        headers: {
+            'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });
+      // console.log(expensesResponse)
+
       if (expensesResponse.status === 200) {
         setExpenses(expensesResponse.data);
         expensesResponse.data.forEach(expense => {
           let share = 0;
           expense.initial.forEach(list => {
-            if (list['phone'] === mobile) share = list['amount']
+            if (list['phone'] == mobile) {share = list['amount']}
           })
           userShare[expense._id] = share
         })
@@ -77,8 +120,14 @@ const Group = () => {
 
   const fetchGroupMembers = async () => {
     try {
+        const token = localStorage.getItem('loggedInUser');
+        const accessToken = JSON.parse(token);
         const memberslist = {}
-        const response = await axios.get(`http://localhost:5555/group/${gid}`);
+        const response = await axios.get(`http://localhost:5555/group/${gid}`,{
+          headers: {
+              'Authorization': `Bearer ${accessToken.accessToken}`
+          }
+        });
         const members = response.data.gmembers;
         if (response.status === 200) {
             const memberPromises = members.map(async (member) => {
@@ -118,9 +167,17 @@ const Group = () => {
     const exp= await fetchGroupData(mobile);
     if(smartSplitting)
     {
-      await axios.delete(`http://localhost:5555/simplifiedExpense/${gid}`);
+      await axios.delete(`http://localhost:5555/simplifiedExpense/${gid}`,{
+        headers: {
+            'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });
       console.log(expenses)
-      await axios.post(`http://localhost:5555/simplifiedExpense/${gid}`, exp);
+      await axios.post(`http://localhost:5555/simplifiedExpense/${gid}`, exp,{
+        headers: {
+            'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });
       await fetchBalance(smartSplitting);
     }
     setShowModal(false);
@@ -148,9 +205,19 @@ const Group = () => {
     const exp= await fetchGroupData(mobile);
     if(smartSplitting)
     {
-      await axios.delete(`http://localhost:5555/simplifiedExpense/${gid}`);
+      const token = localStorage.getItem('loggedInUser');
+      const accessToken = JSON.parse(token);
+      await axios.delete(`http://localhost:5555/simplifiedExpense/${gid}`, {
+        headers: {
+            'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });
       console.log(expenses)
-      await axios.post(`http://localhost:5555/simplifiedExpense/${gid}`, exp);
+      await axios.post(`http://localhost:5555/simplifiedExpense/${gid}`, exp, {
+        headers: {
+            'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });
       await fetchBalance(smartSplitting);
     }
   };
@@ -161,13 +228,31 @@ const Group = () => {
       const newSmartSplitting = !prevSmartSplitting;
       // Use the new state value
       (async () => {
-        console.log(newSmartSplitting)
+        // console.log(newSmartSplitting)
+        const token = localStorage.getItem('loggedInUser');
+        const accessToken = JSON.parse(token);
         if (newSmartSplitting) {
-          await axios.put(`http://localhost:5555/simplifiedExpense/${gid}`, { simplified: true });
-          await axios.post(`http://localhost:5555/simplifiedExpense/${gid}`, expenses);
+          await axios.put(`http://localhost:5555/simplifiedExpense/${gid}`, { simplified: true }, {
+            headers: {
+                'Authorization': `Bearer ${accessToken.accessToken}`
+            }
+          });
+          await axios.post(`http://localhost:5555/simplifiedExpense/${gid}`, expenses, {
+            headers: {
+                'Authorization': `Bearer ${accessToken.accessToken}`
+            }
+          });
         } else {
-          await axios.put(`http://localhost:5555/simplifiedExpense/${gid}`, { simplified: false });
-          await axios.delete(`http://localhost:5555/simplifiedExpense/${gid}`);
+          await axios.put(`http://localhost:5555/simplifiedExpense/${gid}`, { simplified: false }, {
+            headers: {
+                'Authorization': `Bearer ${accessToken.accessToken}`
+            }
+          });
+          await axios.delete(`http://localhost:5555/simplifiedExpense/${gid}`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken.accessToken}`
+            }
+          });
         }
         fetchBalance(!smartSplitting);
       })();
@@ -185,7 +270,7 @@ const Group = () => {
         <h1 className="text-3xl font-bold mb-4">{groupName}</h1>
         <p className="text-xl mb-2">You <span className="font-semibold">{(balance.to_take + balance.to_give) > 0 ? `lent ${((balance.to_take + balance.to_give)).toFixed(2)}` : `owe ${(Math.abs((balance.to_take + balance.to_give))).toFixed(2)}`}</span></p>
         {Object.keys(balance)
-          .filter((key) => key !== 'to_take' && key !== 'to_give' && balance[key] !== 0)
+          .filter((key) => key !== 'to_take' && key !== 'to_give' && Math.abs(balance[key]) >= 0.01)
           .map((key) => (
             <p key={key} className="text-lg mb-2">
               {memberlist[key]} {balance[key] > 0 ? `owes ${(balance[key]).toFixed(2)}` : `lent ${(Math.abs(balance[key])).toFixed(2)}`}
@@ -232,9 +317,6 @@ const Group = () => {
           </label>
           <h4>Smart Split</h4>
         </div>
-
-
-
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-md mt-4">
@@ -245,7 +327,7 @@ const Group = () => {
               <p className="text-lg font-semibold">{expense.expenseName}</p>
               <p className="text-gray-600">{new Date(expense.createdAt).toLocaleDateString()}</p>
               <p className="text-gray-800">Amount: {expense.amount.toFixed(2)}</p>
-              {expense.payer === mobile ? (
+              {expense.payer == mobile ? (
                 <p className="text-green-600">You lent: {(expense.amount - userExpenses[expense._id]).toFixed(2)}</p>
               ) : (
                 <p className="text-red-600">You borrowed: {userExpenses[expense._id].toFixed(2)}</p>

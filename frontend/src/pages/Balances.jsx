@@ -24,8 +24,14 @@ const Balances = ({ gid, simplified, onClose }) => {
 
     const fetchGroupMembers = async () => {
         try {
+            const token = localStorage.getItem('loggedInUser');
+            const accessToken = JSON.parse(token);
             const memberslist = {}
-            const response = await axios.get(`http://localhost:5555/group/${gid}`);
+            const response = await axios.get(`http://localhost:5555/group/${gid}`, {
+                headers: {
+                  'Authorization': `Bearer ${accessToken.accessToken}`
+                }
+              });
             const members = response.data.gmembers;
             if (response.status === 200) {
                 const memberPromises = members.map(async (member) => {
@@ -46,8 +52,14 @@ const Balances = ({ gid, simplified, onClose }) => {
         try {
             const balances = [];
             const indBal = {};
+            const token = localStorage.getItem('loggedInUser');
+            const accessToken = JSON.parse(token);
             for (const member in memberlist) {
-                const response = await axios.get(`http://localhost:5555/group/${gid}/${member}/${simplified}`);
+                const response = await axios.get(`http://localhost:5555/group/${gid}/${member}/${simplified}`, {
+                    headers: {
+                      'Authorization': `Bearer ${accessToken.accessToken}`
+                    }
+                  });
                 if (response.status === 200) {
                     balances.push({
                         id: member,

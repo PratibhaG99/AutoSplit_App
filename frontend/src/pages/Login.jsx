@@ -38,18 +38,18 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.get(`http://localhost:5555/user/${mobile}`);
-      if (response.data) {
-        if (password === response.data.password) {
+      const user={"mobile":mobile,"password":password}
+      const response = await axios.post(`http://localhost:5555/user/login`,user);
+      console.log(response)
+      if (response.status==200) {
           // when the user is verified, save the user details in local storage
-          localStorage.setItem('loggedInUser', JSON.stringify(response.data));
+          localStorage.setItem('loggedInUser', JSON.stringify({"accessToken":response.data.accessToken}));
           navigate('/');
-        } else {
-          setErrorMessage('Incorrect password.');
         }
-      } else {
+      else if(response.status==201)
+        setErrorMessage('Incorrect password.');
+      else if(response.status==202)
         setErrorMessage('Mobile number not registered.');
-      }
     } catch (error) {
       console.error('Error during login:', error.message);
       setErrorMessage('An error occurred during login. Please try again.');
@@ -62,7 +62,7 @@ const Login = () => {
         <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
           <a href="#" className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
             <img className="w-8 h-8 mr-2" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/logo.svg" alt="logo" />
-            Flowbite    
+            AutoSplit    
           </a>
           <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
             <div className="p-6 space-y-4 md:space-y-6 sm:p-8">

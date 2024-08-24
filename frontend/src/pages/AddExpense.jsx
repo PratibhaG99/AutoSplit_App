@@ -19,12 +19,21 @@ const AddExpenseModal = ({ gid, smartSplitting , onClose }) => {
 
   const fetchGroupMembers = async () => {
     try {
-      const loggedInUser = localStorage.getItem('loggedInUser');
-      const user = JSON.parse(loggedInUser);
-      const mobile = user.mobile;
+      const token = localStorage.getItem('loggedInUser');
+      const accessToken = JSON.parse(token);
+      const user = await axios.get(`http://localhost:5555/user/getuser`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });
+      const mobile = user.data.mobile;
       setNewExpense({ ...newExpense, ['addedBy']: String(mobile) });
       const memberslist = {}
-      const response = await axios.get(`http://localhost:5555/group/${gid}`);
+      const response = await axios.get(`http://localhost:5555/group/${gid}`,{
+        headers: {
+          'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });
       const members = response.data.gmembers;
       if (response.status === 200) {
         setGroupMembers(members);
@@ -96,7 +105,13 @@ const AddExpenseModal = ({ gid, smartSplitting , onClose }) => {
   updatedExpense.payees = updatedExpense.payees.filter(payee => (payee.phone != updatedExpense.payer) && (payee.amount > 0));
 
   try {
-    const response = await axios.post(`http://localhost:5555/expense/`, updatedExpense);
+    const token = localStorage.getItem('loggedInUser');
+    const accessToken = JSON.parse(token);
+    const response = await axios.post(`http://localhost:5555/expense/`, updatedExpense,{
+      headers: {
+        'Authorization': `Bearer ${accessToken.accessToken}`
+      }
+    });
     if (response.status === 201) {
       onClose(); // Close the modal after successful addition
     }

@@ -52,7 +52,7 @@ const AddGroupDialog = ({ onClose, onCreateGroup }) => {
         mobileError = 'Mobile number must be exactly 10 digits.';
         valid = false;
       }
-      else if (!/^\d{10}$/.test(mobile)) {
+      else if (!/^\d{10}$/.test(member.mobile)) {
         mobileError = "Mobile number must be exactly 10 digits and contain only numbers";
         valid = false;
       }
@@ -64,9 +64,8 @@ const AddGroupDialog = ({ onClose, onCreateGroup }) => {
       return;
     }
 
-    const loggedInUser = localStorage.getItem('loggedInUser');
-    const user = JSON.parse(loggedInUser);
-    const mobile = user.mobile;
+    const token = localStorage.getItem('loggedInUser');
+    const accessToken = JSON.parse(token);
 
     members.forEach(async (member) => {
       const response = await axios.get(`http://localhost:5555/user/${member.mobile}`);
@@ -80,11 +79,15 @@ const AddGroupDialog = ({ onClose, onCreateGroup }) => {
       }
     });
 
-    const uniqueMembers = new Set([...members.map(member => member.mobile), String(mobile)]);
+    const uniqueMembers = new Set([...members.map(member => member.mobile)]);
     const newGroup = { gname: groupName, gmembers: Array.from(uniqueMembers) };
-
-    try {
-      const response = await axios.post('http://localhost:5555/group', newGroup);
+    console.log(accessToken.accessToken)
+    try { 
+      const response = await axios.post('http://localhost:5555/group', newGroup , {
+        headers: {
+          'Authorization': `Bearer ${accessToken.accessToken}`
+        }
+      });
       if (response.status === 201) {
         onCreateGroup(response.data);
         onClose();
