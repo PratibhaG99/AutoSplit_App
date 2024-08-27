@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import groupImage from '../assets/group.png';
 
 const GroupCard = ({ groups, onGroupDeleted, onGroupUpdated, onEditGroup }) => {
   const [balances, setBalances] = useState({});
@@ -15,15 +16,15 @@ const GroupCard = ({ groups, onGroupDeleted, onGroupUpdated, onEditGroup }) => {
         try {
           const token = localStorage.getItem('loggedInUser');
           const accessToken = JSON.parse(token);
-          const user = await axios.get(`http://localhost:5555/user/getuser`,{
+          const user = await axios.get(`http://localhost:5555/user/getuser`, {
             headers: {
-                'Authorization': `Bearer ${accessToken.accessToken}`
+              'Authorization': `Bearer ${accessToken.accessToken}`
             }
           });
           setMobile(user.data.mobile);
-          const response = await axios.get(`http://localhost:5555/group/${group._id}/${user.data.mobile}/${group.simplified}`,{
+          const response = await axios.get(`http://localhost:5555/group/${group._id}/${user.data.mobile}/${group.simplified}`, {
             headers: {
-                'Authorization': `Bearer ${accessToken.accessToken}`
+              'Authorization': `Bearer ${accessToken.accessToken}`
             }
           });
           if (response.status === 201) {
@@ -63,48 +64,68 @@ const GroupCard = ({ groups, onGroupDeleted, onGroupUpdated, onEditGroup }) => {
     }
   };
 
+  const getInitials = (name) => {
+    const initials = name.split(' ').map(word => word[0]).join('');
+    return initials.toUpperCase();
+  };
+
   return (
-    <div className="mx-auto">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {load ? (
-        <div>
-          {groups.map((item) => (
-            <div className='py-2' key={item._id} onClick={() => navigate(`/autosplit/group/${item._id}`)}>
-              <a className="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
-                <img className="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-s-lg" src="/docs/images/blog/image-4.jpg" alt="" />
-                <div className="flex flex-col justify-between p-4 leading-normal">
-                  <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{item.gname}</h5>
-                  {!balances[item._id] ? (
-                    <p>Loading...</p>
-                  ) : balances[item._id].to_take + balances[item._id].to_give > 0 ? (
-                    <p className="mb-3 font-normal text-green-700 dark:text-green-400">You are Owed {(balances[item._id].to_take + balances[item._id].to_give).toFixed(2)}</p>
-                  ) : balances[item._id].to_take + balances[item._id].to_give < 0 ? (
-                    <p className="mb-3 font-normal text-red-700 dark:text-red-400">You Owe {(Math.abs(balances[item._id].to_take + balances[item._id].to_give).toFixed(2))}</p>
-                  ) : (
-                    <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">You are all settled</p>
-                  )}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteGroup(item._id);
-                    }}
-                    className="bg-red-500 text-white px-4 py-2 rounded"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEditGroup(item);
-                    }}
-                    className="bg-yellow-500 text-white px-4 py-2 rounded ml-2"
-                  >
-                    Edit
-                  </button>
-                </div>
-              </a>
+        groups.map((item) => (
+          <div
+            key={item._id}
+            className="bg-white border border-gray-200 rounded-lg shadow-md hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 cursor-pointer"
+            onClick={() => navigate(`/autosplit/group/${item._id}`)}
+          >
+            <div className="flex items-center justify-center">
+            {/* <div className="flex items-center justify-center w-20 h-20 rounded-full text-white text-2xl font-bold">
+                  {getInitials(item.gname)}
+                </div> */}
+                <img src={ groupImage } className="h-40 w-40"/>
             </div>
-          ))}
-        </div>
+            <div className="p-4 items-center justify-center" >
+              <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white text-center">
+                {item.gname}
+              </h5>
+              {!balances[item._id] ? (
+                <p>Loading...</p>
+              ) : balances[item._id].to_take + balances[item._id].to_give > 0 ? (
+                <p className="mb-3 font-normal text-green-700 dark:text-green-400 text-center">
+                  You are Owed {(balances[item._id].to_take + balances[item._id].to_give).toFixed(2)}
+                </p>
+              ) : balances[item._id].to_take + balances[item._id].to_give < 0 ? (
+                <p className="mb-3 font-normal text-red-700 dark:text-red-400 text-center">
+                  You Owe {Math.abs(balances[item._id].to_take + balances[item._id].to_give).toFixed(2)}
+                </p>
+              ) : (
+                <p className="mb-3 font-normal text-gray-700 dark:text-gray-400 text-center">
+                  You are all settled
+                </p>
+              )}
+              <div className="flex justify-between">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteGroup(item._id);
+                  }}
+                  className="bg-red-500 text-white px-4 py-2 rounded"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditGroup(item);
+                  }}
+                  className="bg-yellow-500 text-white px-4 py-2 rounded ml-2"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
+          </div>
+        ))
       ) : (
         <div />
       )}

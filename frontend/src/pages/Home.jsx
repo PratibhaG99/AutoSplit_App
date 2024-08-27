@@ -6,6 +6,9 @@ import AddGroupDialog from './AddGroupDialog';
 import EditGroupDialog from './EditGroupDialog';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import balanceImage from '../assets/balance.jpeg';
+import oweImage from '../assets/owe.jpeg'
+import lentImage from '../assets/lent.jpeg';
 
 const Home = () => {
   const [groups, setGroups] = useState([]);
@@ -110,51 +113,88 @@ const Home = () => {
   return (
     <div>
       <NavBar />
-      <div className="flex flex-col justify-center px-20 py-10">
+      <div className="flex flex-col justify-center px-6 md:px-20 py-10">
+        
+        <Dashboard groups={groups} />
+        <div className="flex items-center justify-center">
         <button
-          className="bg-green-500 text-white px-4 py-2 rounded mb-4 self-start"
+          className="bg-green-500 text-white px-6 py-3 rounded-lg mb-6 hover:bg-green-600 transition duration-200 self-start ml-auto"
           onClick={openAddGroupDialog}
         >
           Add Group
         </button>
-        <Dashboard groups={groups} />
-        {groups.length > 0 ? (<GroupCard 
-          groups={groups} 
-          onGroupUpdated={handleEditGroup} 
-          onGroupDeleted={handleDeleteGroup} 
-          onEditGroup={openEditGroupDialog} // Pass the edit function to GroupCard
-        />):(
-          <div className="bg-white p-6 rounded-lg shadow-md mt-4">
+        </div>
+        {groups.length > 0 ? (
+          <GroupCard
+            groups={groups}
+            onGroupUpdated={handleEditGroup}
+            onGroupDeleted={handleDeleteGroup}
+            onEditGroup={openEditGroupDialog} // Pass the edit function to GroupCard
+          />
+        ) : (
+          <div className="bg-white p-8 rounded-lg shadow-md mt-6 border border-gray-200">
             <div className="card">
-              <div className="card-content">
-                <h2>No groups to show</h2>
-                <p>It looks like you're not part of any groups yet. Start by creating a group!</p>
+              <div className="card-content text-center">
+                <h2 className="text-xl font-semibold text-gray-700">No groups to show</h2>
+                <p className="text-gray-500 mt-2">It looks like you're not part of any groups yet. Start by creating a group!</p>
               </div>
             </div>
           </div>
-        )} 
+        )}
       </div>
       {showAddGroupDialog && (
-        <AddGroupDialog 
-          onClose={closeAddGroupDialog} 
-          onCreateGroup={handleCreateGroup} 
+        <AddGroupDialog
+          onClose={closeAddGroupDialog}
+          onCreateGroup={handleCreateGroup}
         />
       )}
       {showEditGroupDialog && (
-        <EditGroupDialog 
-          onClose={closeEditGroupDialog} 
-          onEditGroup={handleEditGroup} 
+        <EditGroupDialog
+          onClose={closeEditGroupDialog}
+          onEditGroup={handleEditGroup}
           group={editGroup} // Pass the group to be edited
         />
       )}
-      {/* {showEditProfile && (
-        <EditGroupDialog 
-          onClose={closeEditProfileDialog} 
-          onEditProfile={handleEditProfile} 
-          user={user} // Pass the user to be edited
-        />
-      )} */}
     </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //     :(
+    //       <div className="bg-white p-6 rounded-lg shadow-md mt-4">
+    //         <div className="card">
+    //           <div className="card-content">
+    //             <h2>No groups to show</h2>
+    //             <p>It looks like you're not part of any groups yet. Start by creating a group!</p>
+    //           </div>
+    //         </div>
+    //       </div>
+    //     )} 
+    //   </div>
+    //   {showAddGroupDialog && (
+    //     <AddGroupDialog 
+    //       onClose={closeAddGroupDialog} 
+    //       onCreateGroup={handleCreateGroup} 
+    //     />
+    //   )}
+    //   {showEditGroupDialog && (
+    //     <EditGroupDialog 
+    //       onClose={closeEditGroupDialog} 
+    //       onEditGroup={handleEditGroup} 
+    //       group={editGroup} // Pass the group to be edited
+    //     />
+    //   )}
+    // </div>
   );
 };
 

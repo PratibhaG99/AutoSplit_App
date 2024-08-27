@@ -11,8 +11,10 @@ const Balances = ({ gid, simplified, onClose }) => {
     const [currentMemberName, setCurrentMemberName] = useState('');
     const [memberlist, setMemberlist] = useState({});
     const [isMemberListFetched, setIsMemberListFetched] = useState(false);
+    const [loading, setloading] = useState(false);
 
     useEffect(() => {
+        setloading(true);
         fetchGroupMembers();
     }, []);
 
@@ -67,7 +69,7 @@ const Balances = ({ gid, simplified, onClose }) => {
                         balance: response.data
                     });
                     indBal[member] = Object.keys(response.data)
-                    .filter(key => (response.data[key] !== 0 && key!='to_give' && key!='to_take'))
+                    .filter(key => (response.data[key] !== 0 && key!='to_give' && key!='to_take' && key!='paid' && key!='get_paid'))
                     .map(key => ({
                         id: key,
                         amount: response.data[key]
@@ -76,8 +78,7 @@ const Balances = ({ gid, simplified, onClose }) => {
             }
             setMemberBalances(balances);
             setIndividualBalances(indBal);
-            console.log('Member Balances:', balances);
-            console.log('Individual Balances:', indBal);
+            setloading(false);
         } catch (error) {
             console.error('Error fetching balances:', error.message);
         }
@@ -112,16 +113,25 @@ const Balances = ({ gid, simplified, onClose }) => {
                     </button>
                 </div>
 
-                {memberBalances.length ? 
+                {loading ? (<div className="space-y-2">
+
+                    {Array.from({ length: 3 }).map((_, index) => (
+                        <div key={index} className="flex justify-between items-center p-2 rounded-lg bg-gray-200 animate-pulse">
+                            <div className="w-1/3 h-4 bg-gray-300 rounded"></div>
+                            <div className="w-1/4 h-4 bg-gray-300 rounded"></div>
+                        </div>
+                    ))}
+
+                </div>) : (memberBalances.length ? 
                 <div className="mb-4">
                     {memberBalances.map(member => (
                         (member.balance.to_take + member.balance.to_give) !== 0 && (
                             <div key={member.id}>
                                 <div
-                                    className="flex justify-between items-center p-2 rounded-lg bg-gray-100 mb-2 cursor-pointer"
+                                    className={`flex justify-between items-center p-2 rounded-lg ${(member.balance.to_take + member.balance.to_give) > 0 ? 'bg-green-100' : 'bg-red-100'} mb-2 cursor-pointer`}
                                     onClick={() => handleMemberClick(member)}
                                 >
-                                    <span className="text-gray-700">
+                                    <span className={`text-sm ${(member.balance.to_take + member.balance.to_give) > 0 ? 'text-green-700' : 'text-red-700'}`}>
                                         {member.name} {(member.balance.to_take + member.balance.to_give) > 0 ? `gets back ${(member.balance.to_take + member.balance.to_give).toFixed(2)}` : `owes ${(Math.abs(member.balance.to_take + member.balance.to_give)).toFixed(2)}`}
                                     </span>
                                 </div>
@@ -129,8 +139,8 @@ const Balances = ({ gid, simplified, onClose }) => {
                                     (<div className="ml-4">
                                         {individualBalances[member.id] && individualBalances[member.id].map(balance => (
                                             balance.amount !== 0 && (
-                                                <div key={balance.id} className="flex justify-between items-center p-2 rounded-lg bg-gray-50 mb-2">
-                                                    <span className="text-gray-700">
+                                                <div key={balance.id} className="flex justify-between items-center p-2 rounded-lg bg-gray-100 mb-2">
+                                                    <span className={`text-sm ${balance.amount > 0 ? 'text-green-700' : 'text-red-700'}`}>
                                                         {memberlist[balance.id]} {balance.amount > 0 ? `owes ${(balance.amount).toFixed(2)}` : `gets back ${Math.abs(balance.amount).toFixed(2)}`}
                                                     </span>
                                                     <button
@@ -148,7 +158,7 @@ const Balances = ({ gid, simplified, onClose }) => {
                         )
                     ))}
                 </div>
-                : <p className="text-gray-600">You Are all Settled up.</p> }
+                : <p className="text-gray-600">You Are all Settled up.</p>) }
 
 
                 {showSettleUp && (

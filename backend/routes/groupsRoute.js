@@ -112,6 +112,8 @@ const calculateUserBalances = (expenses, phone) => {
     const userBalances = {};
     userBalances['to_take']=0
     userBalances['to_give']=0
+    userBalances['paid']=0
+    userBalances['get_paid']=0
     expenses.forEach(expense => {
         const { payer, payees } = expense;
         
@@ -120,6 +122,7 @@ const calculateUserBalances = (expenses, phone) => {
             payees.forEach(payee => {
                 if (!userBalances[payee.phone]) userBalances[payee.phone] = 0;
                 userBalances[payee.phone] += payee.amount;
+                if(expense.type==="paid") userBalances['paid'] += payee.amount
                 userBalances['to_take']+=payee.amount;
             });
         } else {
@@ -128,6 +131,7 @@ const calculateUserBalances = (expenses, phone) => {
                 if (payee.phone === phone) {
                     if (!userBalances[payer]) userBalances[payer] = 0;
                     userBalances[payer] -= payee.amount;
+                    if(expense.type==="paid") userBalances['get_paid'] += payee.amount
                     userBalances['to_give']-=payee.amount;
                 }
             });
@@ -149,13 +153,10 @@ router.get('/:gId/:phone/:smartSplitting', authenticateToken ,async (request, re
         else
             expenses = await Expense.find({ groupId: gId });
         if (expenses.length > 0) {
-            // Calculate balances
-            // console.log("PHONE:",phone)
             const userBalances = calculateUserBalances(expenses, parseInt(phone));
-            // console.log("USERbALANCE:",userBalances)
             response.status(200).json(userBalances);
         } else {
-            console.log('No expense found for groupId:', gId);
+            // console.log('No expense found for groupId:', gId);
             response.status(201).json({ message: 'No expense found for this group' });
         }
     } catch (error) {

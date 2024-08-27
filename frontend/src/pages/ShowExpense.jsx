@@ -64,27 +64,70 @@ const ShowExpense = ({ gid, expense, onClose, onDelete }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-800 bg-opacity-75" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-lg p-6 w-1/3 relative" onClick={(event) => event.stopPropagation()}>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">{expenseName}</h2>
-          <button onClick={onClose} className="text-red-500 hover:text-red-700">
-            &times;
-          </button>
-        </div>
-        <div className="mb-4">
-          <p className="text-lg"><span className="font-semibold">Paid by:</span> {memberlist[payer]}</p>
-          <p className="text-lg"><span className="font-semibold">Amount:</span> {amount}</p>
-          <p className="text-lg"><span className="font-semibold">Added by:</span> {memberlist[addedBy]}</p>
-          <p className="text-lg"><span className="font-semibold">Date:</span> {new Date(createdAt).toLocaleDateString()}</p>
-        </div>
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold">Shares:</h3>
-          {initial.map((payee, index) => (
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">{expenseName}</h2>
+        <button onClick={onClose} className="text-red-500 hover:text-red-700">
+          &times;
+        </button>
+      </div>
+
+      <div className="mb-4">
+        <p className="text-lg">
+          <span className="font-semibold">Paid by:  </span> 
+          {Object.keys(memberlist).length === 0 ? (
+            <span className="inline-block w-1/3 h-4 bg-gray-300 animate-pulse rounded ml-2"></span>
+          ) : (
+            memberlist[payer]
+          )}
+        </p>
+        <p className="text-lg">
+          <span className="font-semibold">Amount:   </span> 
+          {Object.keys(memberlist).length === 0 ? (
+            <span className="inline-block w-1/4 h-4 bg-gray-300 animate-pulse rounded ml-2"></span>
+          ) : (
+            amount
+          )}
+        </p>
+        <p className="text-lg">
+          <span className="font-semibold">Added by:  </span> 
+          {Object.keys(memberlist).length === 0 ? (
+            <span className="inline-block w-1/3 h-4 bg-gray-300 animate-pulse rounded ml-2"></span>
+          ) : (
+            memberlist[addedBy]
+          )}
+        </p>
+        <p className="text-lg">
+          <span className="font-semibold">Date:   </span> 
+          {Object.keys(memberlist).length === 0 ? (
+            <span className="inline-block w-1/4 h-4 bg-gray-300 animate-pulse rounded ml-2"></span>
+          ) : (
+            new Date(createdAt).toLocaleDateString()
+          )}
+        </p>
+      </div>
+
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold">Shares:  </h3>
+        {Object.keys(memberlist).length === 0 ? (
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="flex justify-between items-center p-2 rounded-lg bg-gray-200 animate-pulse">
+                <div className="w-1/3 h-4 bg-gray-300 rounded"></div>
+                <div className="w-1/4 h-4 bg-gray-300 rounded"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          initial.map((payee, index) => (
             <div key={index} className="flex justify-between items-center p-2 rounded-lg bg-gray-100 mb-2">
               <span className="text-gray-700">{memberlist[payee.phone]}</span>
               <span className="text-gray-700">{payee.amount}</span>
             </div>
-          ))}
-        </div>
+          ))
+        )}
+      </div>
+
+
         <div className="flex justify-end">
           <button
             className="bg-red-500 text-white px-4 py-2 rounded mr-2"

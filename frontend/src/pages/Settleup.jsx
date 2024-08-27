@@ -10,6 +10,7 @@ const Settleup = ({ gid, simplified, onClose}) => {
     const [memberlist, setMemberlist] = useState({});
     const [selectedMember, setSelectedMember] = useState(null);
     const [selectedBalance, setSelectedBalance] = useState(null);
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -56,7 +57,7 @@ const Settleup = ({ gid, simplified, onClose}) => {
               navigate('/autosplit/login'); // Navigate to login page if user data is not found
             }
           };
-        
+          setLoading(true);
           fetchData();
 
 
@@ -121,6 +122,7 @@ const Settleup = ({ gid, simplified, onClose}) => {
         
                 await Promise.all(memberPromises);
                 setMemberlist(memberslist);
+                setLoading(false);
             }
         } catch (error) {
             console.error('Error fetching group members:', error.message);
@@ -147,7 +149,7 @@ const Settleup = ({ gid, simplified, onClose}) => {
         (key) => key !== 'to_take' && key !== 'to_give' && balance[key] !== 0
       );
 
-    return (
+      return (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-800 bg-opacity-75" onClick={onClose}>
             <div className="bg-white rounded-lg shadow-lg p-4 w-1/3 relative" onClick={(event) => event.stopPropagation()}>
                 <div className="flex justify-between items-center mb-4">
@@ -157,10 +159,19 @@ const Settleup = ({ gid, simplified, onClose}) => {
                     </button>
                 </div>
 
-                {relevantBalances.length > 0 ? 
+                { loading ? (<div className="space-y-2">
+
+                    {Array.from({ length: 2 }).map((_, index) => (
+                        <div key={index} className="flex justify-between items-center p-2 rounded-lg bg-gray-200 animate-pulse">
+                            <div className="w-1/3 h-4 bg-gray-300 rounded"></div>
+                            <div className="w-1/4 h-4 bg-gray-300 rounded"></div>
+                        </div>
+                    ))}
+
+                </div>)  :  (relevantBalances.length > 0 ? 
                 (<div className="mb-4">
                     {Object.keys(balance).map((key) => (
-                        key !== 'to_take' && key !== 'to_give' && Math.abs(balance[key]) >= 0.01 ? (
+                        key !== 'to_take' && key !== 'to_give' && key !== 'paid' && key !== 'get_paid' && balance[key] !== 0 ? (
                             <div 
                                 key={key} 
                                 className={`flex justify-between items-center p-2 rounded-lg ${balance[key] > 0 ? 'bg-green-100' : 'bg-red-100'} mb-2 cursor-pointer`}
@@ -176,7 +187,7 @@ const Settleup = ({ gid, simplified, onClose}) => {
                         ) : null
                     ))}
                 </div> )
-                : <p className="text-gray-600">You Are all Settled up.</p> }
+                : <p className="text-gray-600">You Are all Settled up.</p>) }
 
                 <div className="flex justify-between">
                     <span className="text-green-500">Total Lent: {formatAmount(balance.to_take)}</span>
